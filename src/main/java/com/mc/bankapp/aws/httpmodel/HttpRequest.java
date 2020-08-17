@@ -8,6 +8,8 @@ public class HttpRequest {
 	Map<String, String> pathParameters;
 	Map<String, String> headers;
 	
+	String body;
+	
 	public Map<String, String> getHeaders() {
 		return headers;
 	}
@@ -15,7 +17,7 @@ public class HttpRequest {
 	public void setHeaders(Map<String, String> headers) {
 		this.headers = headers;
 	}
-	String body;
+	
 	
 	public Map<String, String> getQueryStringParameters() {
 		return queryStringParameters;

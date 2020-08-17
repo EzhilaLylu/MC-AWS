@@ -54,14 +54,14 @@ public class ApplyLoan implements RequestHandler<HttpRequest, HttpResponse> {
 			return httpResponse;
 		}
 		
-		String headerUser = (String) request.getHeaders().get("username");
-		String headerPass = (String) request.getHeaders().get("password");
+		String oAuthToken = (String) request.getHeaders().get("Authorization");
 		
-		boolean validated_user = CommonFunctions.validateTheUser(identity,headerUser,headerPass);
+		
+		boolean validated_user = CommonFunctions.validateTheUserbyAuth(identity,oAuthToken);
 		
 		if(!validated_user) {
 			HttpResponse httpResponse = new HttpResponse();
-			httpResponse.setBody("Please Check Username and password");
+			httpResponse.setBody("User Doesnot have valid session.. Please LogIn");
 			httpResponse.setStatusCode("403");
 			return httpResponse;
 		}
