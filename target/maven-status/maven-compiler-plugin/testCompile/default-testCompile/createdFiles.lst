@@ -1,0 +1,14 @@
+com\mc\bankapp\aws\TestUtils$UpperCaseRecordsPropertyNamingStrategy.class
+com\mc\bankapp\aws\TestUtils$TestJacksonMapperModule.class
+com\mc\bankapp\aws\TestUtils$DateTimeSerializer.class
+com\mc\bankapp\aws\TestUtils$1.class
+com\mc\bankapp\aws\TestContext.class
+com\mc\bankapp\aws\TestUtils.class
+com\mc\bankapp\aws\TestUtils$DynamodbEventMixin.class
+com\mc\bankapp\aws\SignUpTest.class
+com\mc\bankapp\aws\TestUtils$DynamodbEventMixin$RecordMixin.class
+com\mc\bankapp\aws\TestUtils$DynamodbEventMixin$StreamRecordMixin.class
+com\mc\bankapp\aws\TestContext$TestLogger.class
+com\mc\bankapp\aws\TestContext$1.class
+com\mc\bankapp\aws\TestUtils$DateTimeDeserializer.class
+com\mc\bankapp\aws\TestUtils$DynamodbEventMixin$AttributeValueMixIn.class
