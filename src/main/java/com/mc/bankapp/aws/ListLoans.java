@@ -24,13 +24,36 @@ public class ListLoans implements RequestHandler<HttpRequest, HttpResponse> {
 
 	private DynamoDB dynamoDB;
 	private String LOAN_TABLE_NAME = "LoanTable";
+	private String BANK_TABLE_NAME = "BankUser";
 	
 
 	@Override
 	public HttpResponse handleRequest(HttpRequest request, Context context) {
-		
 		this.initDynamoDbClient();
+		
 		String identity = (String) request.getPathParameters().get("userId");
+		
+		boolean is_user_exist = CommonFunctions.check_user_exist(identity);
+		
+		if(!is_user_exist) {
+			HttpResponse httpResponse = new HttpResponse();
+			httpResponse.setBody("No Such User "+identity);
+			httpResponse.setStatusCode("403");
+			return httpResponse;
+		}
+		
+		String headerUser = (String) request.getHeaders().get("username");
+		String headerPass = (String) request.getHeaders().get("password");
+		
+		boolean validated_user = CommonFunctions.validateTheUser(identity,headerUser,headerPass);
+		
+		if(!validated_user) {
+			HttpResponse httpResponse = new HttpResponse();
+			httpResponse.setBody("Please Check Username and password");
+			httpResponse.setStatusCode("403");
+			return httpResponse;
+		}
+		
 		List<LoanResponseModel> response =  new ArrayList<LoanResponseModel>(); 
 		response = getDataPresent(identity);
 
@@ -43,10 +66,8 @@ public class ListLoans implements RequestHandler<HttpRequest, HttpResponse> {
 		return new HttpResponse(response);
 	}
 
-	private void initDynamoDbClient() {
-		AmazonDynamoDB client = AmazonDynamoDBClientBuilder.standard().build();
-		this.dynamoDB = new DynamoDB(client);
-	}
+	
+	
 
 	private List<LoanResponseModel> getDataPresent(String identity) {
 		List<LoanResponseModel> response =  new ArrayList<LoanResponseModel>();
@@ -88,5 +109,11 @@ public class ListLoans implements RequestHandler<HttpRequest, HttpResponse> {
 		return resp;
 		
 	}
+	
+	private void initDynamoDbClient() {
+		AmazonDynamoDB client = AmazonDynamoDBClientBuilder.standard().build();
+		this.dynamoDB = new DynamoDB(client);
+	}
+    
 
 }

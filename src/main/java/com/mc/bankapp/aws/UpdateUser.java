@@ -8,6 +8,7 @@ import java.util.Random;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClientBuilder;
 import com.amazonaws.services.dynamodbv2.document.DynamoDB;
+import com.amazonaws.services.dynamodbv2.document.Index;
 import com.amazonaws.services.dynamodbv2.document.Item;
 import com.amazonaws.services.dynamodbv2.document.ItemCollection;
 import com.amazonaws.services.dynamodbv2.document.PutItemOutcome;
@@ -46,32 +47,48 @@ public class UpdateUser implements RequestHandler<HttpRequest, HttpResponse> {
 		
 		String identity  = (String) request.getPathParameters().get("userId");
 		
-		boolean is_data_present = checkDataPresent(userDetailsModel.getEmail(),identity);
+		boolean is_user_exist = CommonFunctions.check_user_exist(identity);
 		
-		if(is_data_present) {
-			updateData(userDetailsModel);
-			UserResponse userResponse = new UserResponse();
-			userResponse.setAccountType(userDetailsModel.getAccountType());
-			userResponse.setContactNo(userDetailsModel.getContactNo());
-			userResponse.setCountry(userDetailsModel.getCountry());
-			userResponse.setDob(userDetailsModel.getDob());
-			userResponse.setEmail(userDetailsModel.getEmail());
-			userResponse.setName(userDetailsModel.getName());
-			userResponse.setState(userDetailsModel.getState());
-			userResponse.setPublicUserId(identity);
-			return new HttpResponse(userResponse);	
-			
-		}else {
-
+		if(!is_user_exist) {
 			HttpResponse httpResponse = new HttpResponse();
-			httpResponse.setStatusCode("500");
-			httpResponse.setBody("Please Register!! No Such User to modify the values");
+			httpResponse.setBody("No Such User "+identity+". Please Register!!");
+			httpResponse.setStatusCode("403");
 			return httpResponse;
 		}
 		
+		String headerUser = (String) request.getHeaders().get("username");
+		String headerPass = (String) request.getHeaders().get("password");
+		
+		boolean validated_user = CommonFunctions.validateTheUser(identity,headerUser,headerPass);
+		
+		if(!validated_user) {
+			HttpResponse httpResponse = new HttpResponse();
+			httpResponse.setBody("Please Check Username and password");
+			httpResponse.setStatusCode("403");
+			return httpResponse;
+		}
+		
+		updateData(userDetailsModel);
+		UserResponse userResponse = responseCreation(userDetailsModel,identity);
+			
+		return new HttpResponse(userResponse);	
+		
     }
     
-    private void initDynamoDbClient() {
+    private UserResponse responseCreation(UserDetailsModel userDetailsModel, String identity) {
+    	UserResponse userResponse = new UserResponse();
+		userResponse.setAccountType(userDetailsModel.getAccountType());
+		userResponse.setContactNo(userDetailsModel.getContactNo());
+		userResponse.setCountry(userDetailsModel.getCountry());
+		userResponse.setDob(userDetailsModel.getDob());
+		userResponse.setEmail(userDetailsModel.getEmail());
+		userResponse.setName(userDetailsModel.getName());
+		userResponse.setState(userDetailsModel.getState());
+		userResponse.setPublicUserId(identity);
+		return userResponse;
+	}
+
+	private void initDynamoDbClient() {
 		AmazonDynamoDB client = AmazonDynamoDBClientBuilder.standard().build();
 		this.dynamoDB = new DynamoDB(client);
 	}
@@ -101,18 +118,22 @@ public class UpdateUser implements RequestHandler<HttpRequest, HttpResponse> {
   	 }
     
    	private boolean checkDataPresent(String email, String identity) {
+   		
+   		String indexname = "PublicUserId-index";
 		Table table = dynamoDB.getTable(BANK_TABLE_NAME);
+		Index index = table.getIndex(indexname); 
+		
 		HashMap<String, String> nameMap = new HashMap<String, String>();
-        nameMap.put("#yr", "EmailAddress");
+        nameMap.put("#yr", "PublicUserId");
 
         HashMap<String, Object> valueMap = new HashMap<String, Object>();
-        valueMap.put(":yyyy", email);
+        valueMap.put(":yyyy", identity);
 
-        QuerySpec querySpec = new QuerySpec().withKeyConditionExpression("#yr = :yyyy").withNameMap(nameMap)
-            .withValueMap(valueMap);
+        QuerySpec querySpec1 = new QuerySpec().withKeyConditionExpression("#yr = :yyyy").withNameMap(nameMap)
+                .withValueMap(valueMap);
+        ItemCollection<QueryOutcome> items = index.query(querySpec1);
+        Iterator<Item>iterator = items.iterator();
         
-        ItemCollection<QueryOutcome> items = table.query(querySpec);
-        Iterator<Item> iterator = items.iterator();
         if(iterator.hasNext()) {
         	return true;
         }

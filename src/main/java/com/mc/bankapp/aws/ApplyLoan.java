@@ -45,31 +45,51 @@ public class ApplyLoan implements RequestHandler<HttpRequest, HttpResponse> {
 		String body = request.getBody();
 		String identity  = (String) request.getPathParameters().get("userId");
 		
-		Gson gson = new Gson();
-		LoanDetailsModel loanDetailsModel = gson.fromJson(body, LoanDetailsModel.class);
-				
-		loanDetailsModel.setLoanIdentity(identity);
+		boolean is_user_exist = CommonFunctions.check_user_exist(identity);
 		
-		boolean is_data_present = checkDataPresent(identity);
-		if(is_data_present) {
-			loanDetailsModel = addLoanId(loanDetailsModel);
-			persistData(loanDetailsModel);
-			LoanResponseModel loanResponseModel = new LoanResponseModel();
-			loanResponseModel.setDate(loanDetailsModel.getDate());
-			loanResponseModel.setDurationOfLoan(loanDetailsModel.getDurationOfLoan());
-			loanResponseModel.setLoanAmount(loanDetailsModel.getLoanAmount());
-			loanResponseModel.setLoanIdentity(loanDetailsModel.getLoanIdentity());
-			loanResponseModel.setLoanType(loanDetailsModel.getLoanType());
-			loanResponseModel.setRateOfInterest(loanDetailsModel.getRateOfInterest());
-			return new HttpResponse(loanResponseModel);		
-		}else {
+		if(!is_user_exist) {
 			HttpResponse httpResponse = new HttpResponse();
-			httpResponse.setBody("User not registered");
+			httpResponse.setBody("No Such User "+identity);
 			httpResponse.setStatusCode("403");
 			return httpResponse;
 		}
 		
+		String headerUser = (String) request.getHeaders().get("username");
+		String headerPass = (String) request.getHeaders().get("password");
+		
+		boolean validated_user = CommonFunctions.validateTheUser(identity,headerUser,headerPass);
+		
+		if(!validated_user) {
+			HttpResponse httpResponse = new HttpResponse();
+			httpResponse.setBody("Please Check Username and password");
+			httpResponse.setStatusCode("403");
+			return httpResponse;
+		}
+		
+		Gson gson = new Gson();
+		LoanDetailsModel loanDetailsModel = gson.fromJson(body, LoanDetailsModel.class);
+				
+		loanDetailsModel.setLoanIdentity(identity);
+		loanDetailsModel = addLoanId(loanDetailsModel);
+		persistData(loanDetailsModel);
+		LoanResponseModel loanResponseModel = responseCreation(loanDetailsModel);
+		return new HttpResponse(loanResponseModel);		
+		}
+		
+	
+
+	private LoanResponseModel responseCreation(LoanDetailsModel loanDetailsModel) {
+		LoanResponseModel loanResponseModel = new LoanResponseModel();
+		loanResponseModel.setDate(loanDetailsModel.getDate());
+		loanResponseModel.setDurationOfLoan(loanDetailsModel.getDurationOfLoan());
+		loanResponseModel.setLoanAmount(loanDetailsModel.getLoanAmount());
+		loanResponseModel.setLoanIdentity(loanDetailsModel.getLoanIdentity());
+		loanResponseModel.setLoanType(loanDetailsModel.getLoanType());
+		loanResponseModel.setRateOfInterest(loanDetailsModel.getRateOfInterest());
+		return loanResponseModel;
 	}
+
+
 
 	private LoanDetailsModel addLoanId(LoanDetailsModel loanDetailsModel) {
 		final Random RANDOM = new SecureRandom();
