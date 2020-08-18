@@ -1,6 +1,8 @@
 package com.mc.bankapp.aws;
 
+import java.io.UnsupportedEncodingException;
 import java.security.SecureRandom;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
@@ -36,7 +38,11 @@ public class SignIn implements RequestHandler<HttpRequest, HttpResponse> {
 		
 		String token = "";
 		if(validated_user) {
-			token = create_token();
+			try {
+				token = create_token(details.getUser(),details.getPassword());
+			} catch (UnsupportedEncodingException e) {
+				e.printStackTrace();
+			}
 			update_bank_user(token,details.getUser());
 		}else {
 			HttpResponse httpResponse = new HttpResponse();
@@ -68,17 +74,11 @@ public class SignIn implements RequestHandler<HttpRequest, HttpResponse> {
 	}
 
 
-	private String create_token() {
-		final Random RANDOM = new SecureRandom();
-	    final String ALPHABET = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
-		
-	    StringBuilder returnValue = new StringBuilder(30);
+	private String create_token(String username, String password) throws UnsupportedEncodingException {
+		String tokenInRaw = username.concat(":").concat(password);
+		String token = Base64.getEncoder().encodeToString(tokenInRaw.getBytes("utf-8"));
 
-	    for (int i = 0; i < 30; i++) {
-	        returnValue.append(ALPHABET.charAt(RANDOM.nextInt(ALPHABET.length())));
-	    }
-
-	    return returnValue.toString();
+	    return token;
 	}
 	
 	private void initDynamoDbClient() {

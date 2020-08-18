@@ -4,6 +4,7 @@ import java.security.SecureRandom;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Random;
+import java.util.function.BiFunction;
 
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClientBuilder;
@@ -67,9 +68,12 @@ public class UpdateUser implements RequestHandler<HttpRequest, HttpResponse> {
 			return httpResponse;
 		}
 		
+		
 		updateData(userDetailsModel);
-		UserResponse userResponse = responseCreation(userDetailsModel,identity);
-			
+		
+		BiFunction<UserDetailsModel, String, UserResponse>exe = new UpdateUser()::responseCreation;  
+		UserResponse userResponse = exe.apply(userDetailsModel, identity);  
+					
 		return new HttpResponse(userResponse);	
 		
     }

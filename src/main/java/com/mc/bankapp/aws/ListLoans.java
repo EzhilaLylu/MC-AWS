@@ -84,15 +84,23 @@ public class ListLoans implements RequestHandler<HttpRequest, HttpResponse> {
 				.withKeyConditionExpression("#yr = :yyyy")
 				.withNameMap(nameMap)
 				.withValueMap(valueMap);
+		
 		ItemCollection<QueryOutcome> items = index.query(querySpec1);
 		Iterator<Item> iterator = items.iterator();
 		
+		List<Item> itemsCollection = new ArrayList<Item>();
 		while (iterator.hasNext()) {
 			Item data = iterator.next();
-			LoanResponseModel model = new LoanResponseModel();
-			model = convert_to_java(data);
-			response.add(model);
+			itemsCollection.add(data);
 		}
+		
+		itemsCollection.forEach( (item) -> {
+			LoanResponseModel model = new LoanResponseModel();
+			model = convert_to_java( item );
+			response.add(model);
+		});
+		
+		
 		return response;
 
 	}
